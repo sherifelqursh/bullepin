@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Pin, AtSign, Lock, ArrowRight } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { GoogleLogo } from "./GoogleLogo";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useAuth } from "../lib/auth";
 import { useToast } from "../lib/toast";
@@ -116,7 +117,7 @@ function SocialButton({
       {variant === "facebook" ? (
         <Ionicons name="logo-facebook" size={24} color="#1877F2" />
       ) : variant === "google" ? (
-        <Ionicons name="logo-google" size={22} color="#1F1B1A" />
+        <GoogleLogo size={22} />
       ) : (
         <Ionicons name="logo-apple" size={24} color="#1F1B1A" />
       )}

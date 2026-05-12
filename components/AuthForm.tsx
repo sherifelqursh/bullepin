@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Pin, AtSign, Lock, ArrowRight } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useAuth } from "../lib/auth";
@@ -92,10 +93,6 @@ function SocialButton({
   variant: "facebook" | "google" | "apple";
   onPress: () => void;
 }) {
-  const labelColor =
-    variant === "facebook" ? "#1877F2" : variant === "google" ? "#1F1B1A" : "#1F1B1A";
-  const symbol =
-    variant === "facebook" ? "f" : variant === "google" ? "G" : "";
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -116,31 +113,12 @@ function SocialButton({
         elevation: 1,
       }}
     >
-      {variant === "google" ? (
-        <View style={{ flexDirection: "row" }}>
-          <Text
-            style={{
-              fontFamily: "PlusJakartaSans_800ExtraBold",
-              fontSize: 22,
-              color: "#4285F4",
-            }}
-          >
-            G
-          </Text>
-        </View>
-      ) : variant === "apple" ? (
-        <Text style={{ fontSize: 22, color: "#1F1B1A" }}>{""}</Text>
+      {variant === "facebook" ? (
+        <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+      ) : variant === "google" ? (
+        <Ionicons name="logo-google" size={22} color="#1F1B1A" />
       ) : (
-        <Text
-          style={{
-            fontFamily: "PlusJakartaSans_800ExtraBold",
-            fontSize: 24,
-            color: labelColor,
-            lineHeight: 26,
-          }}
-        >
-          {symbol}
-        </Text>
+        <Ionicons name="logo-apple" size={24} color="#1F1B1A" />
       )}
     </AnimatedPressable>
   );
@@ -244,16 +222,8 @@ export function AuthForm({ mode }: Props) {
           <Animated.View
             entering={FadeInDown.delay(140).springify().damping(14).stiffness(320).mass(0.5)}
             style={{
-              backgroundColor: "rgba(255, 255, 255, 0.55)",
-              borderRadius: 28,
-              padding: 22,
-              shadowColor: "#A63A2F",
-              shadowOpacity: 0.07,
-              shadowRadius: 18,
-              shadowOffset: { width: 0, height: 8 },
-              elevation: 3,
-              borderWidth: 1,
-              borderColor: "rgba(241, 226, 216, 0.7)",
+              paddingHorizontal: 4,
+              paddingTop: 4,
             }}
           >
             {isSignup && (

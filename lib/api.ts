@@ -648,6 +648,30 @@ export const api = {
     await updateDoc(doc(db, "users", me), { avatarUrl: url });
     return { avatarUrl: url };
   },
+
+  // ---- Account deletion --------------------------------------------------
+  // Wipe every circle this user owns + leave every circle they're in.
+  // Called before deleteUser() on the Firebase Auth side.
+  purgeAccountData: async () => {
+    const me = uid();
+    // Every circle the user is in.
+    const memberDocs = await getDocs(
+      query(collectionGroup(db, "members"), where("userId", "==", me))
+    );
+    const circleIds = memberDocs.docs.map((d) => d.ref.parent.parent!.id);
+    for (const cid of circleIds) {
+      const cSnap = await getDoc(doc(db, "circles", cid));
+      if (!cSnap.exists()) continue;
+      const ownerId = cSnap.data().ownerId as string;
+      if (ownerId === me) {
+        // Owner → delete the whole circle, including all pins/members/etc.
+        await api.deleteCircle(cid);
+      } else {
+        // Non-owner → just leave (also wipes their RSVPs on this circle).
+        await evictMember(cid, me);
+      }
+    }
+  },
 };
 
 // ---------- Internal helpers ----------------------------------------------

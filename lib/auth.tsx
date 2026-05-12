@@ -9,12 +9,15 @@ import {
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut as fbSignOut,
   updateProfile as updateAuthProfile,
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
+  deleteUser,
   type User as FbUser,
 } from "firebase/auth";
 import {
@@ -27,7 +30,7 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
-import { clearProfileCache } from "./api";
+import { api, clearProfileCache } from "./api";
 
 export type PublicUser = {
   id: string;
@@ -50,11 +53,13 @@ type AuthState = {
   refresh: () => Promise<void>;
   setUser: (u: PublicUser) => void;
   changePassword: (current: string, next: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   updateProfile: (patch: {
     name?: string;
     phone?: string;
     avatarUrl?: string | null;
   }) => Promise<PublicUser>;
+  deleteAccount: (currentPassword: string) => Promise<void>;
 };
 
 const Ctx = createContext<AuthState | null>(null);
@@ -157,9 +162,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await updateAuthProfile(cred.user, { displayName: name.trim() });
       }
       await ensureUserDoc(cred.user, name);
+      // Fire-and-forget verification email. Don't block signup if it fails.
+      sendEmailVerification(cred.user).catch(() => {});
     },
     []
   );
+
+  const resetPassword = useCallback(async (email: string) => {
+    const target = email.trim();
+    if (!target) throw new Error("Enter your email first.");
+    if (!target.includes("@"))
+      throw new Error("Use an email address to reset your password.");
+    await sendPasswordResetEmail(auth, target);
+  }, []);
 
   const signOut = useCallback(async () => {
     await fbSignOut(auth);
@@ -203,6 +218,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const deleteAccount = useCallback(async (currentPassword: string) => {
+    const fbUser = auth.currentUser;
+    if (!fbUser?.email) throw new Error("Not signed in");
+    // Re-auth before destructive ops (Firebase requirement for delete).
+    const credential = EmailAuthProvider.credential(fbUser.email, currentPassword);
+    await reauthenticateWithCredential(fbUser, credential);
+    // Walk every circle the user is in, transfer ownership or delete.
+    await api.purgeAccountData();
+    // Delete the user profile doc.
+    try {
+      const { deleteDoc, doc } = await import("firebase/firestore");
+      await deleteDoc(doc(db, "users", fbUser.uid));
+    } catch {
+      // best effort
+    }
+    // Finally drop the Firebase Auth account.
+    await deleteUser(fbUser);
+    clearProfileCache();
+    setUser(null);
+  }, []);
+
   const value = useMemo<AuthState>(
     () => ({
       user,
@@ -213,9 +249,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refresh,
       setUser,
       changePassword,
+      resetPassword,
       updateProfile,
+      deleteAccount,
     }),
-    [user, loading, signIn, signUp, signOut, refresh, changePassword, updateProfile]
+    [
+      user,
+      loading,
+      signIn,
+      signUp,
+      signOut,
+      refresh,
+      changePassword,
+      resetPassword,
+      updateProfile,
+      deleteAccount,
+    ]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

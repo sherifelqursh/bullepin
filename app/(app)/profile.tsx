@@ -10,6 +10,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   Alert,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -18,9 +19,9 @@ import {
   Mail,
   Phone,
   Lock,
-  Bell,
   HelpCircle,
   Edit3,
+  Trash2,
   X,
 } from "lucide-react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -32,6 +33,16 @@ import { AnimatedPressable } from "../../components/AnimatedPressable";
 import { Polaroid } from "../../components/Polaroid";
 import { AppHeader } from "../../components/AppHeader";
 
+// Public legal pages. Update LEGAL_BASE_URL once your GitHub Pages
+// site (or whatever host you use) is live — see docs/PRIVACY.md /
+// docs/TERMS.md.
+const LEGAL_BASE_URL = "https://elqurshdev.github.io/bullepin";
+const URLS = {
+  privacy: `${LEGAL_BASE_URL}/privacy`,
+  terms: `${LEGAL_BASE_URL}/terms`,
+  help: `${LEGAL_BASE_URL}/help`,
+};
+
 function diceBearUrl(seed: string, size: number) {
   const safe = encodeURIComponent(seed);
   return `https://api.dicebear.com/7.x/lorelei/png?seed=${safe}&size=${Math.round(
@@ -41,7 +52,7 @@ function diceBearUrl(seed: string, size: number) {
 
 export default function Profile() {
   const router = useRouter();
-  const { user, signOut, setUser, changePassword, updateProfile } = useAuth();
+  const { user, signOut, setUser, changePassword, updateProfile, deleteAccount } = useAuth();
   const toast = useToast();
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(user?.name ?? "");
@@ -50,7 +61,9 @@ export default function Profile() {
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [savingPw, setSavingPw] = useState(false);
-  const [notifications, setNotifications] = useState(true);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deletePw, setDeletePw] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   if (!user) return null;
 
@@ -121,6 +134,22 @@ export default function Profile() {
     }
   };
 
+  const onConfirmDelete = async () => {
+    if (!deletePw) {
+      toast.show("Enter your password to confirm", "error");
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deleteAccount(deletePw);
+      // Account is gone — RouteGuard kicks us to /(auth)/login on next render.
+      router.replace("/(auth)/login");
+    } catch (err: any) {
+      toast.show(err?.message ?? "Couldn't delete account", "error");
+      setDeleting(false);
+    }
+  };
+
   const confirmLogout = () => {
     const proceed = async () => {
       await signOut();
@@ -154,8 +183,8 @@ export default function Profile() {
         contentContainerStyle={{ padding: 24, paddingBottom: 60 }}
       >
         <View style={{ alignItems: "center", marginBottom: 32, marginTop: 12 }}>
-          <AnimatedPressable pressScale={0.96} onPress={onPickAvatar}>
-            <Polaroid rotate={-3} delay={80}>
+          <Polaroid rotate={-3} delay={80}>
+            <AnimatedPressable pressScale={0.96} onPress={onPickAvatar}>
               {avatarUrl ? (
                 <Image
                   source={{ uri: avatarUrl }}
@@ -188,28 +217,30 @@ export default function Profile() {
                   </Text>
                 </View>
               )}
-              <View style={{ alignItems: "center", paddingTop: 10 }}>
-                <View
-                  style={{ flexDirection: "row", alignItems: "center" }}
+            </AnimatedPressable>
+            <AnimatedPressable
+              pressScale={0.96}
+              onPress={() => setEditingName(true)}
+              style={{ alignItems: "center", paddingTop: 10 }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text
+                  style={{
+                    fontFamily: "PlusJakartaSans_800ExtraBold",
+                    color: "#A63A2F",
+                    fontSize: 22,
+                  }}
                 >
-                  <Text
-                    style={{
-                      fontFamily: "PlusJakartaSans_800ExtraBold",
-                      color: "#A63A2F",
-                      fontSize: 22,
-                    }}
-                  >
-                    {user.name.split(" ")[0]}
-                  </Text>
-                  <Edit3
-                    color="#A63A2F"
-                    size={16}
-                    style={{ marginLeft: 8 }}
-                  />
-                </View>
+                  {user.name.split(" ")[0]}
+                </Text>
+                <Edit3
+                  color="#A63A2F"
+                  size={16}
+                  style={{ marginLeft: 8 }}
+                />
               </View>
-            </Polaroid>
-          </AnimatedPressable>
+            </AnimatedPressable>
+          </Polaroid>
           <AnimatedPressable
             pressScale={0.96}
             onPress={() => setEditingName(true)}
@@ -394,94 +425,6 @@ export default function Profile() {
           </AnimatedPressable>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(180).springify().damping(14).stiffness(320).mass(0.5)}>
-          <Text
-            style={{
-              fontFamily: "PlusJakartaSans_800ExtraBold",
-              color: "#1F1B1A",
-              fontSize: 28,
-              marginBottom: 12,
-            }}
-          >
-            Preferences
-          </Text>
-
-          <AnimatedPressable
-            pressScale={0.985}
-            onPress={() => {
-              setNotifications(!notifications);
-              toast.show(
-                `Notifications ${!notifications ? "on" : "off"}`,
-                "info"
-              );
-            }}
-            style={{
-              backgroundColor: "#F4E5DC",
-              paddingHorizontal: 16,
-              paddingVertical: 16,
-              marginBottom: 28,
-              flexDirection: "row",
-              alignItems: "center",
-              borderRadius: 22,
-            }}
-          >
-            <View
-              style={{
-                height: 44,
-                width: 44,
-                backgroundColor: "#E2EEF4",
-                alignItems: "center",
-                justifyContent: "center",
-                marginRight: 14,
-                borderRadius: 999,
-              }}
-            >
-              <Bell color="#3F6F8A" size={20} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontFamily: "PlusJakartaSans_800ExtraBold",
-                  color: "#1F1B1A",
-                  fontSize: 16,
-                }}
-              >
-                Notifications
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "PlusJakartaSans_500Medium",
-                  color: "rgba(31,27,26,0.65)",
-                  fontSize: 15,
-                }}
-              >
-                {notifications
-                  ? "Keeping up with your circles"
-                  : "Notifications muted"}
-              </Text>
-            </View>
-            <View
-              style={{
-                width: 46,
-                height: 26,
-                backgroundColor: notifications ? "#A63A2F" : "#E5DDD7",
-                alignItems: notifications ? "flex-end" : "flex-start",
-                justifyContent: "center",
-                paddingHorizontal: 3,
-                borderRadius: 999,
-              }}
-            >
-              <View
-                style={{
-                  height: 20,
-                  width: 20,
-                  backgroundColor: "#FFF8F5",
-                  borderRadius: 999,
-                }}
-              />
-            </View>
-          </AnimatedPressable>
-        </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(240).springify().damping(14).stiffness(320).mass(0.5)}>
           <Text
@@ -498,7 +441,7 @@ export default function Profile() {
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 28 }}>
             <AnimatedPressable
               pressScale={0.97}
-              onPress={() => toast.show("Help center coming soon", "info")}
+              onPress={() => Linking.openURL(URLS.help)}
               style={{
                 flex: 1,
                 backgroundColor: "#E2EEF4",
@@ -525,7 +468,7 @@ export default function Profile() {
             <View style={{ flex: 1, gap: 12 }}>
               <AnimatedPressable
                 pressScale={0.97}
-                onPress={() => toast.show("Terms coming soon", "info")}
+                onPress={() => Linking.openURL(URLS.terms)}
                 style={{
                   backgroundColor: "#F1E2D8",
                   paddingHorizontal: 16,
@@ -553,7 +496,7 @@ export default function Profile() {
               </AnimatedPressable>
               <AnimatedPressable
                 pressScale={0.97}
-                onPress={() => toast.show("Policy coming soon", "info")}
+                onPress={() => Linking.openURL(URLS.privacy)}
                 style={{
                   backgroundColor: "#F1E2D8",
                   paddingHorizontal: 16,
@@ -610,6 +553,31 @@ export default function Profile() {
               }}
             >
               Log Out
+            </Text>
+          </AnimatedPressable>
+
+          {/* Account deletion — required by App Store policy. */}
+          <AnimatedPressable
+            pressScale={0.95}
+            onPress={() => setShowDelete(true)}
+            style={{
+              marginTop: 18,
+              flexDirection: "row",
+              alignItems: "center",
+              paddingVertical: 8,
+              paddingHorizontal: 14,
+            }}
+          >
+            <Trash2 color="#A63A2F" size={16} />
+            <Text
+              style={{
+                fontFamily: "PlusJakartaSans_700Bold",
+                color: "#A63A2F",
+                fontSize: 14,
+                marginLeft: 6,
+              }}
+            >
+              Delete account
             </Text>
           </AnimatedPressable>
           <Text
@@ -853,6 +821,124 @@ export default function Profile() {
                     }}
                   >
                     Change password
+                  </Text>
+                )}
+              </AnimatedPressable>
+            </Animated.View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Delete account modal */}
+      <Modal
+        visible={showDelete}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !deleting && setShowDelete(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(31,27,26,0.45)",
+              justifyContent: "flex-end",
+            }}
+          >
+            <Animated.View
+              entering={FadeInUp.springify().damping(14).stiffness(320).mass(0.5)}
+              style={{
+                backgroundColor: "#FFF8F5",
+                padding: 24,
+                paddingBottom: 32,
+                borderTopLeftRadius: 32,
+                borderTopRightRadius: 32,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 16,
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "PlusJakartaSans_800ExtraBold",
+                    color: "#A63A2F",
+                    fontSize: 26,
+                  }}
+                >
+                  Delete account?
+                </Text>
+                <AnimatedPressable
+                  pressScale={0.92}
+                  onPress={() => !deleting && setShowDelete(false)}
+                >
+                  <X color="#1F1B1A" size={24} />
+                </AnimatedPressable>
+              </View>
+              <Text
+                style={{
+                  fontFamily: "PlusJakartaSans_500Medium",
+                  color: "rgba(31,27,26,0.75)",
+                  fontSize: 15,
+                  lineHeight: 22,
+                  marginBottom: 18,
+                }}
+              >
+                This is permanent. We'll:
+                {"\n"}• delete every Circle you own (members & pins included),
+                {"\n"}• remove you from Circles you've joined,
+                {"\n"}• erase your profile and sign-in.
+                {"\n\n"}
+                Enter your current password to confirm.
+              </Text>
+              <TextInput
+                value={deletePw}
+                onChangeText={setDeletePw}
+                secureTextEntry
+                placeholder="Current password"
+                placeholderTextColor="#9C8A80"
+                style={{
+                  backgroundColor: "#FFFFFF",
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  marginBottom: 18,
+                  fontFamily: "PlusJakartaSans_500Medium",
+                  fontSize: 16,
+                  color: "#1F1B1A",
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: "#F1E2D8",
+                }}
+              />
+              <AnimatedPressable
+                pressScale={0.97}
+                onPress={onConfirmDelete}
+                disabled={deleting}
+                style={{
+                  backgroundColor: "#A63A2F",
+                  paddingVertical: 16,
+                  alignItems: "center",
+                  borderRadius: 999,
+                  opacity: deleting ? 0.6 : 1,
+                }}
+              >
+                {deleting ? (
+                  <ActivityIndicator color="#FFF8F5" />
+                ) : (
+                  <Text
+                    style={{
+                      fontFamily: "PlusJakartaSans_800ExtraBold",
+                      color: "#FFF8F5",
+                      fontSize: 18,
+                    }}
+                  >
+                    Permanently delete account
                   </Text>
                 )}
               </AnimatedPressable>

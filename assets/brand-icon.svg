@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Background: brand red rounded square -->
+  <rect width="1024" height="1024" rx="220" fill="#A63A2F"/>
+  <!-- Pin head: cream halo -->
+  <circle cx="512" cy="430" r="186" fill="#FFF8F5"/>
+  <!-- Pin shaft tapered: trapezoid from head to tip -->
+  <path d="M 446 596 L 578 596 L 540 760 L 484 760 Z" fill="#FFF8F5"/>
+  <!-- Pin tip: small triangle just below shaft -->
+  <path d="M 484 760 L 540 760 L 512 820 Z" fill="#FFF8F5"/>
+</svg>

@@ -1,0 +1,10 @@
+title: BullePin
+description: Where your circle stays connected.
+theme: jekyll-theme-cayman
+markdown: kramdown
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true
+permalink: pretty

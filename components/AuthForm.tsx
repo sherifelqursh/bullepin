@@ -10,9 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Pin, AtSign, Lock, ArrowRight } from "lucide-react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { GoogleLogo } from "./GoogleLogo";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useAuth } from "../lib/auth";
 import { useToast } from "../lib/toast";
@@ -87,52 +85,13 @@ function Field({
   );
 }
 
-function SocialButton({
-  variant,
-  onPress,
-}: {
-  variant: "facebook" | "google" | "apple";
-  onPress: () => void;
-}) {
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      pressScale={0.94}
-      style={{
-        backgroundColor: "#FFFFFF",
-        borderRadius: 999,
-        paddingHorizontal: 30,
-        paddingVertical: 12,
-        borderWidth: 1.4,
-        borderColor: "#F1E2D8",
-        minWidth: 78,
-        alignItems: "center",
-        shadowColor: "#A63A2F",
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 1,
-      }}
-    >
-      {variant === "facebook" ? (
-        <Ionicons name="logo-facebook" size={24} color="#1877F2" />
-      ) : variant === "google" ? (
-        <GoogleLogo size={22} />
-      ) : (
-        <Ionicons name="logo-apple" size={24} color="#1F1B1A" />
-      )}
-    </AnimatedPressable>
-  );
-}
-
 export function AuthForm({ mode }: Props) {
   const router = useRouter();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const toast = useToast();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [stay, setStay] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const isSignup = mode === "signup";
@@ -263,52 +222,30 @@ export function AuthForm({ mode }: Props) {
               />
             </View>
 
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 22,
-              }}
-            >
-              <AnimatedPressable
-                onPress={() => setStay(!stay)}
-                pressScale={0.97}
-                style={{ flexDirection: "row", alignItems: "center" }}
+            {!isSignup && (
+              <View
+                style={{
+                  alignItems: "flex-end",
+                  marginBottom: 22,
+                }}
               >
-                <View
-                  style={{
-                    height: 22,
-                    width: 22,
-                    marginRight: 10,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: 7,
-                    borderWidth: 1.5,
-                    borderColor: stay ? "#A63A2F" : "#C0AFA5",
-                    backgroundColor: stay ? "#A63A2F" : "transparent",
-                  }}
-                >
-                  {stay && (
-                    <Text style={{ color: "#FFF8F5", fontWeight: "800" }}>✓</Text>
-                  )}
-                </View>
-                <Text
-                  style={{
-                    fontFamily: "PlusJakartaSans_600SemiBold",
-                    fontSize: 15,
-                    color: "#1F1B1A",
-                  }}
-                >
-                  Stay logged in
-                </Text>
-              </AnimatedPressable>
-              {!isSignup && (
                 <AnimatedPressable
-                  onPress={() =>
-                    toast.show("Password reset isn't wired up in this demo.")
-                  }
+                  onPress={async () => {
+                    try {
+                      await resetPassword(identifier);
+                      toast.show(
+                        "Reset email sent — check your inbox.",
+                        "success"
+                      );
+                    } catch (err: any) {
+                      toast.show(
+                        err?.message ?? "Could not send reset email",
+                        "error"
+                      );
+                    }
+                  }}
                   pressScale={0.95}
+                  style={{ paddingVertical: 4, paddingHorizontal: 6 }}
                 >
                   <Text
                     style={{
@@ -317,11 +254,12 @@ export function AuthForm({ mode }: Props) {
                       fontSize: 15,
                     }}
                   >
-                    Forgot?
+                    Forgot password?
                   </Text>
                 </AnimatedPressable>
-              )}
-            </View>
+              </View>
+            )}
+            {isSignup && <View style={{ marginBottom: 22 }} />}
 
             <AnimatedPressable
               onPress={submit}
@@ -366,54 +304,6 @@ export function AuthForm({ mode }: Props) {
               )}
             </AnimatedPressable>
 
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginTop: 26,
-                marginBottom: 18,
-              }}
-            >
-              <View style={{ flex: 1, height: 1, backgroundColor: "#EADBCF" }} />
-              <Text
-                style={{
-                  paddingHorizontal: 14,
-                  color: "#7A6E68",
-                  fontSize: 14,
-                  fontFamily: "PlusJakartaSans_500Medium",
-                }}
-              >
-                Or pop in with
-              </Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: "#EADBCF" }} />
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 12,
-              }}
-            >
-              <SocialButton
-                variant="facebook"
-                onPress={() =>
-                  toast.show("Social sign-in is stubbed in this demo.")
-                }
-              />
-              <SocialButton
-                variant="google"
-                onPress={() =>
-                  toast.show("Social sign-in is stubbed in this demo.")
-                }
-              />
-              <SocialButton
-                variant="apple"
-                onPress={() =>
-                  toast.show("Social sign-in is stubbed in this demo.")
-                }
-              />
-            </View>
           </Animated.View>
 
           <Animated.View

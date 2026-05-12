@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Cream background -->
+  <rect width="1024" height="1024" fill="#FFF8F5"/>
+  <!-- Centered red pin circle -->
+  <circle cx="512" cy="460" r="180" fill="#A63A2F"/>
+  <!-- White pin head -->
+  <circle cx="512" cy="420" r="78" fill="#FFF8F5"/>
+  <!-- White pin shaft -->
+  <path d="M 484 480 L 540 480 L 528 590 L 496 590 Z" fill="#FFF8F5"/>
+  <!-- White pin tip -->
+  <path d="M 496 590 L 528 590 L 512 624 Z" fill="#FFF8F5"/>
+</svg>

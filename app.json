@@ -25,6 +25,9 @@
       "permissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -45,6 +48,12 @@
       },
       "router": {}
     },
-    "owner": "elqurshdev"
+    "owner": "elqurshdev",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/091bf1d9-16ad-4e34-8420-1bf54c075245"
+    }
   }
 }

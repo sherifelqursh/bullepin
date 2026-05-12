@@ -1,0 +1,42 @@
+# fly.toml — Fly.io config for the BullePin backend.
+# After editing app name + region, deploy with:
+#   flyctl launch --no-deploy   (first time only; lets Fly create the app)
+#   flyctl volumes create bullepin_data --size 1 --region <region>
+#   flyctl secrets set BULLEPIN_JWT_SECRET="$(openssl rand -hex 48)"
+#   flyctl deploy
+
+app = "bullepin-api"               # pick a globally-unique name on first launch
+primary_region = "iad"             # change to your nearest region (ord, lax, sea, lhr, fra, syd, etc.)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  # Mount point matches the volume below.
+  BULLEPIN_DATA_DIR = "/data"
+  # Tighten this once you have a deployed web origin (e.g. "https://bullepin.app").
+  # Leaving "*" while only mobile clients exist is acceptable since they don't enforce CORS.
+  BULLEPIN_CORS_ORIGIN = "*"
+
+[[mounts]]
+  source = "bullepin_data"         # must match the volume name you create
+  destination = "/data"
+
+[http_service]
+  internal_port = 4001
+  force_https = true
+  auto_stop_machines = "stop"      # Fly idles the VM when no traffic; cold start is ~1s.
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "get"
+    path = "/"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory_mb = 256

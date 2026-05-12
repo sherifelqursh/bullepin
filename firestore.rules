@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------- Helpers ----------------------------------------------------
+    function signedIn() {
+      return request.auth != null;
+    }
+    function myId() {
+      return request.auth.uid;
+    }
+    function isMember(circleId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(myId()));
+    }
+    function isAdmin(circleId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(myId()))
+        && get(/databases/$(database)/documents/circles/$(circleId)/members/$(myId())).data.role == 'Admin';
+    }
+
+    // -------- Collection-group rules ------------------------------------
+    // Firestore's static analyzer for collection-group queries needs a
+    // dedicated rule that only references statically-decidable predicates
+    // (no helper functions that read other docs). The recursive wildcard
+    // path matches the same collections as the nested rules below, and
+    // either rule granting access is enough.
+    match /{any=**}/members/{uid} {
+      allow read: if signedIn() && resource.data.userId == myId();
+    }
+    match /{any=**}/invitations/{iid} {
+      allow read: if signedIn() && resource.data.inviteeUserId == myId();
+    }
+
+    // -------- Users -------------------------------------------------------
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create: if signedIn() && myId() == uid;
+      allow update: if signedIn() && myId() == uid;
+      allow delete: if false;
+    }
+
+    // -------- Circles -----------------------------------------------------
+    match /circles/{cid} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.ownerId == myId();
+      allow update: if isAdmin(cid);
+      allow delete: if isAdmin(cid);
+
+      // ---- Members ------------------------------------------------------
+      match /members/{uid} {
+        // Path-scoped reads (single doc, or subcollection list while
+        // viewing a circle's settings). Collection-group queries are
+        // covered by the recursive rule above.
+        allow read: if signedIn() && (uid == myId() || isMember(cid));
+        allow create: if signedIn() && uid == myId();
+        allow update: if isAdmin(cid);
+        // Self-leave or admin-kick. The "owner can't be removed" guard
+        // lives in the client API (so circle-deletion's cascading
+        // member-delete still works).
+        allow delete: if signedIn() && (uid == myId() || isAdmin(cid));
+      }
+
+      // ---- Invitations --------------------------------------------------
+      match /invitations/{iid} {
+        allow read: if isAdmin(cid)
+                    || (signedIn() && resource.data.inviteeUserId == myId());
+        allow create: if isAdmin(cid);
+        allow update: if isAdmin(cid)
+                      || (signedIn() && resource.data.inviteeUserId == myId());
+        allow delete: if isAdmin(cid);
+      }
+
+      // ---- Pins ---------------------------------------------------------
+      match /pins/{pid} {
+        allow read: if isMember(cid);
+        allow create: if isMember(cid) && request.resource.data.creatorId == myId();
+        allow update: if isMember(cid) && (resource.data.creatorId == myId() || isAdmin(cid));
+        allow delete: if resource.data.creatorId == myId() || isAdmin(cid);
+
+        match /rsvps/{uid} {
+          allow read: if isMember(cid);
+          allow create, update: if isMember(cid) && uid == myId();
+          allow delete: if uid == myId() || isAdmin(cid);
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// Paste the contents of this file into:
+//   Firebase Console -> Storage -> Rules -> Edit rules -> Publish.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Avatars: avatars/{uid} or avatars/{uid}.<ext>
+    // Each user can read any avatar (needed for display) and write their own.
+    match /avatars/{file=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && file.matches(request.auth.uid + '.*')
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Pin covers: covers/{circleId}/{file}
+    // Membership is enforced in Firestore (only members can create the
+    // pin doc that references this URL). Here we just gate by signed-in
+    // status + image MIME + size cap.
+    match /covers/{circleId}/{file=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

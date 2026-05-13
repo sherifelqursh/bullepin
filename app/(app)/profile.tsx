@@ -36,7 +36,7 @@ import { AppHeader } from "../../components/AppHeader";
 // Public legal pages. Update LEGAL_BASE_URL once your GitHub Pages
 // site (or whatever host you use) is live — see docs/PRIVACY.md /
 // docs/TERMS.md.
-const LEGAL_BASE_URL = "https://elqurshdev.github.io/bullepin";
+const LEGAL_BASE_URL = "https://sherifelqursh.github.io/bullepin";
 const URLS = {
   privacy: `${LEGAL_BASE_URL}/privacy`,
   terms: `${LEGAL_BASE_URL}/terms`,

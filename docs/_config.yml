@@ -2,6 +2,3 @@ title: BullePin
 description: Where your circle stays connected.
 theme: jekyll-theme-cayman
 markdown: kramdown
-# `permalink: pretty` strips .html from page URLs so /privacy works
-# alongside /privacy.html.
-permalink: pretty

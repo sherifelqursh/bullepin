@@ -28,6 +28,10 @@
     }
   },
   "submit": {
+    "preview": {
+      "ios": {},
+      "android": {}
+    },
     "production": {}
   }
 }

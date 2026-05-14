@@ -1,7 +1,6 @@
 ---
 layout: default
 title: Terms of Service — BullePin
-permalink: /terms
 ---
 
 # Terms of Service

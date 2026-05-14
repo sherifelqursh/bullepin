@@ -1,7 +1,6 @@
 ---
 layout: default
 title: Privacy Policy — BullePin
-permalink: /privacy
 ---
 
 # Privacy Policy

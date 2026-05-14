@@ -1,7 +1,6 @@
 ---
 layout: default
 title: Help — BullePin
-permalink: /help
 ---
 
 # BullePin Help

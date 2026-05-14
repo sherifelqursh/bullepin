@@ -38,9 +38,9 @@ import { AppHeader } from "../../components/AppHeader";
 // docs/TERMS.md.
 const LEGAL_BASE_URL = "https://sherifelqursh.github.io/bullepin";
 const URLS = {
-  privacy: `${LEGAL_BASE_URL}/privacy`,
-  terms: `${LEGAL_BASE_URL}/terms`,
-  help: `${LEGAL_BASE_URL}/help`,
+  privacy: `${LEGAL_BASE_URL}/privacy.html`,
+  terms: `${LEGAL_BASE_URL}/terms.html`,
+  help: `${LEGAL_BASE_URL}/help.html`,
 };
 
 function diceBearUrl(seed: string, size: number) {
